@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.accountbook.model.StatisticsData
 import com.example.accountbook.viewmodel.RecordViewModel
+import com.example.accountbook.ui.components.PieChartSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,14 @@ fun StatisticsContent(statistics: StatisticsData, padding: PaddingValues) {
     ) {
         item {
             KeyMetricsRow(statistics)
+        }
+        // 新增：分类支出明细
+        item {
+            CategoryExpenseSection(statistics.categoryExpense)
+        }
+        // 新增：饼图部分
+        item {
+            PieChartSection(statistics)  // 这里调用组件
         }
     }
 }
@@ -135,6 +144,62 @@ fun MetricCard(
                 "¥${"%.2f".format(amount)}",
                 style = MaterialTheme.typography.titleMedium,
                 color = color,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+// 新增：分类支出明细组件
+@Composable
+fun CategoryExpenseSection(categoryExpense: Map<String, Double>) {
+    if (categoryExpense.isNotEmpty()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "分类支出",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 12.dp),
+                fontWeight = FontWeight.Bold
+            )
+
+            // 按金额降序排序显示
+            val sortedCategories = categoryExpense.entries.sortedByDescending { it.value }
+
+            sortedCategories.forEach { (category, amount) ->
+                CategoryExpenseItem(
+                    category = category,
+                    amount = amount,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryExpenseItem(
+    category: String,
+    amount: Double,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = category,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = "¥${"%.2f".format(amount)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold
             )
         }

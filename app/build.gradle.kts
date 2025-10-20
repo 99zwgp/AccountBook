@@ -84,6 +84,10 @@ dependencies {
     //导航依赖V0.3
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
+    // 新增：MPAndroidChart图表库（Compose版本）
+//    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+//    implementation("com.github.tehras:charts:0.2.4-alpha")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

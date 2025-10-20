@@ -20,25 +20,38 @@ import com.example.accountbook.model.RecordType
 import com.example.accountbook.viewmodel.RecordViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddRecordScreen(
     onRecordSaved: () -> Unit,
-    onCancel: () -> Unit,       // 新增取消回调
+    onCancel: () -> Unit,
     viewModel: RecordViewModel = viewModel()
 ) {
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(RecordType.EXPENSE) }
-    var selectedCategory by remember { mutableStateOf("") }
+    var formState by remember { mutableStateOf(AddRecordFormState()) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    val categories = remember(selectedType) {
-        when (selectedType) {
+    val categories = remember(formState.type) {
+        when (formState.type) {
             RecordType.INCOME -> RecordCategories.INCOME_CATEGORIES
             RecordType.EXPENSE -> RecordCategories.EXPENSE_CATEGORIES
         }
+    }
+
+    // 实时金额验证
+    LaunchedEffect(formState.amount) {
+        formState = formState.copy(
+            amountError = validateAmount(formState.amount)
+        )
+    }
+
+    // 实时分类验证
+    LaunchedEffect(formState.category) {
+        formState = formState.copy(
+            categoryError = validateCategory(formState.category)
+        )
     }
 
     Scaffold(
@@ -54,7 +67,8 @@ fun AddRecordScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -63,77 +77,114 @@ fun AddRecordScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             // 金额输入
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("金额") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column {
+                OutlinedTextField(
+                    value = formState.amount,
+                    onValueChange = { newAmount ->
+                        formState = formState.copy(amount = newAmount)
+                    },
+                    label = { Text("金额") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = formState.amountError != null,
+                    trailingIcon = {
+                        Text("¥", style = MaterialTheme.typography.bodyLarge)
+                    }
+                )
+                if (formState.amountError != null) {
+                    Text(
+                        text = formState.amountError ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+            }
 
             // 类型选择
-            Text("类型", style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                RecordType.entries.forEach { type ->
-                    val isSelected = type == selectedType
-                    val backgroundColor =
-                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+            Column {
+                Text("类型", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    RecordType.entries.forEach { type ->
+                        val isSelected = type == formState.type
+                        val backgroundColor =
+                            if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
 
-                    TextButton(
-                        onClick = {
-                            selectedType = type
-                            selectedCategory = ""
-                        },
-                        colors = ButtonDefaults.textButtonColors(
-                            containerColor = backgroundColor,
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Text(
-                            text = when (type) {
-                                RecordType.INCOME -> "收入"
-                                RecordType.EXPENSE -> "支出"
-                            }
-                        )
+                        TextButton(
+                            onClick = {
+                                formState = formState.copy(
+                                    type = type,
+                                    category = ""
+                                )
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                containerColor = backgroundColor,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Text(text = type.displayName)
+                        }
                     }
                 }
             }
 
             // 分类选择
-            Text("分类", style = MaterialTheme.typography.titleMedium)
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(categories) { category ->
-                    val isSelected = category == selectedCategory
-                    val backgroundColor =
-                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+            Column {
+                Text("分类", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.height(200.dp)
+                ) {
+                    items(categories) { category ->
+                        val isSelected = category == formState.category
+                        val backgroundColor =
+                            if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
 
-                    Button(
-                        onClick = { selectedCategory = category },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = backgroundColor,
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = category,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        )
+                        Button(
+                            onClick = {
+                                formState = formState.copy(category = category)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = backgroundColor,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = category,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
                     }
+                }
+                if (formState.categoryError != null) {
+                    Text(
+                        text = formState.categoryError ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
 
             // 备注输入
             OutlinedTextField(
-                value = note,
-                onValueChange = { note = it },
+                value = formState.note,
+                onValueChange = { newNote ->
+                    formState = formState.copy(note = newNote)
+                },
                 label = { Text("备注") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -142,25 +193,40 @@ fun AddRecordScreen(
             // 保存按钮
             Button(
                 onClick = {
-                    if (amount.isBlank() || selectedCategory.isBlank()) {
-                        return@Button
+                    scope.launch {
+                        if (validateForm(formState)) {
+                            val amountValue = formState.amount.toDoubleOrNull() ?: return@launch
+
+                            val newRecord = Record(
+                                type = formState.type,
+                                amount = amountValue,
+                                category = formState.category,
+                                note = formState.note
+                            )
+
+                            viewModel.addRecord(newRecord)
+
+                            snackbarHostState.showSnackbar(
+                                message = "成功添加${formState.category}记录",
+                                duration = SnackbarDuration.Short
+                            )
+
+                            kotlinx.coroutines.delay(500)
+                            onRecordSaved()
+                        } else {
+                            snackbarHostState.showSnackbar(
+                                message = "请检查输入内容",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
                     }
-                    val amountValue = amount.toDoubleOrNull() ?: return@Button
-
-                    val newRecord = Record(
-                        type = selectedType,
-                        amount = amountValue,
-                        category = selectedCategory,
-                        note = note
-                    )
-
-                    viewModel.addRecord(newRecord)
-                    onRecordSaved()
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedCategory.isNotBlank() && amount.isNotBlank()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = validateForm(formState)
             ) {
-                Text("保存")
+                Text("保存记录", style = MaterialTheme.typography.titleMedium)
             }
         }
     }

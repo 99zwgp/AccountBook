@@ -6,40 +6,83 @@ import com.example.accountbook.model.RecordDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
+// 定义数据操作状态（在类外部，这样其他文件也可以使用）
+sealed class DataState<out T> {
+    object Loading : DataState<Nothing>()
+    data class Success<T>(val data: T) : DataState<T>()
+    data class Error(val message: String) : DataState<Nothing>()
+}
 class RecordRepository(private val appDatabase: AppDatabase) {
 
+    // 获取DAO实例
+    private val recordDao: RecordDao = appDatabase.recordDao()
+
+    // 操作状态管理 - 使用密封类替代简单的Boolean
+    private val _operationState = MutableStateFlow<DataState<Unit>>(DataState.Success(Unit))
+    val operationState: StateFlow<DataState<Unit>> = _operationState
+
+    // 统计加载状态
+//    private val _statsState = MutableStateFlow<DataState<Boolean>>(DataState.Success(false))
+//    val statsState: StateFlow<DataState<Boolean>> = _statsState
+
     fun getAllRecords(): Flow<List<Record>> {
-        return appDatabase.recordDao().getAllRecords()
+        return recordDao.getAllRecords()
     }
 
     suspend fun addRecord(record: Record) {
+        /*
         withContext(Dispatchers.IO) {
             appDatabase.recordDao().insertRecord(record)
+        }
+*/
+        _operationState.value = DataState.Loading
+        try {
+            // 修正：使用正确的DAO方法名 insertRecord
+            recordDao.insertRecord(record)
+            _operationState.value = DataState.Success(Unit)
+        } catch (e: Exception) {
+            _operationState.value = DataState.Error("添加记录失败: ${e.message}")
         }
     }
 
     suspend fun updateRecord(record: Record) {
-        withContext(Dispatchers.IO) {
-            appDatabase.recordDao().updateRecord(record)
+        _operationState.value = DataState.Loading
+        try {
+            // 修正：使用正确的DAO方法名 updateRecord
+            recordDao.updateRecord(record)
+            _operationState.value = DataState.Success(Unit)
+        } catch (e: Exception) {
+            _operationState.value = DataState.Error("更新记录失败: ${e.message}")
         }
     }
 
     suspend fun deleteRecord(record: Record) {
-        withContext(Dispatchers.IO) {
-            appDatabase.recordDao().deleteRecord(record)
+        _operationState.value = DataState.Loading
+        try {
+            // 修正：使用正确的DAO方法名 deleteRecord
+            recordDao.deleteRecord(record)
+            _operationState.value = DataState.Success(Unit)
+        } catch (e: Exception) {
+            _operationState.value = DataState.Error("删除记录失败: ${e.message}")
         }
     }
 
     suspend fun getTotalExpenses(): Double {
         return withContext(Dispatchers.IO) {
-            appDatabase.recordDao().getTotalExpenses() ?: 0.0
+            recordDao.getTotalExpenses() ?: 0.0
         }
     }
 
     suspend fun getTotalIncome(): Double {
         return withContext(Dispatchers.IO) {
-            appDatabase.recordDao().getTotalIncome() ?: 0.0
+            recordDao.getTotalIncome() ?: 0.0
         }
+    }
+    // 清除操作状态（用于重置错误状态）
+    fun clearOperationState() {
+        _operationState.value = DataState.Success(Unit)
     }
 }

@@ -43,3 +43,4 @@ data class CategoryAmount(
     val category: String,
     val total: Double
 )
+

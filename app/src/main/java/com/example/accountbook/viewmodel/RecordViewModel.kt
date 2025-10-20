@@ -8,6 +8,8 @@ import com.example.accountbook.model.StatisticsData
 import com.example.accountbook.repository.RecordRepository
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.StateFlow
+import com.example.accountbook.repository.DataState
 
 class RecordViewModel(private val recordRepository: RecordRepository) : ViewModel() {
 
@@ -34,6 +36,9 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
     val statistics = records.map { records ->
         calculateStatistics(records)
     }
+
+    // 新增：暴露加载状态
+    val operationState: StateFlow<DataState<Unit>> = recordRepository.operationState
 
     // 新增统计计算方法 V0.3
     // 私有的统计计算方法
@@ -67,6 +72,12 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
     fun deleteRecord(record: Record) {
         viewModelScope.launch {
             recordRepository.deleteRecord(record)
+        }
+    }
+    // 新增：清除操作状态
+    fun clearOperationState() {
+        viewModelScope.launch {
+            recordRepository.clearOperationState()
         }
     }
 }
