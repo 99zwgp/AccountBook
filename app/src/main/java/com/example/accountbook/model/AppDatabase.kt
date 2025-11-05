@@ -8,7 +8,7 @@ import android.content.Context
 
 @Database(
     entities = [Record::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(RecordTypeConverter::class)
@@ -20,13 +20,17 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
+            println("DEBUG: 初始化数据库") // 添加调试
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "accounting_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()  // 添加这行，允许破坏性迁移
+                    .build()
                 INSTANCE = instance
+                println("DEBUG: 数据库创建完成")
                 instance
             }
         }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+
 // 定义数据操作状态（在类外部，这样其他文件也可以使用）
 sealed class DataState<out T> {
     object Loading : DataState<Nothing>()
@@ -33,11 +34,6 @@ class RecordRepository(private val appDatabase: AppDatabase) {
     }
 
     suspend fun addRecord(record: Record) {
-        /*
-        withContext(Dispatchers.IO) {
-            appDatabase.recordDao().insertRecord(record)
-        }
-*/
         _operationState.value = DataState.Loading
         try {
             // 修正：使用正确的DAO方法名 insertRecord
@@ -69,7 +65,15 @@ class RecordRepository(private val appDatabase: AppDatabase) {
             _operationState.value = DataState.Error("删除记录失败: ${e.message}")
         }
     }
-
+    // 新增：根据ID获取记录 V0.4
+    // 修复：根据ID获取记录 - 直接调用DAO，不要循环调用
+    suspend fun getRecordById(id: String): Record? {
+        return try {
+            recordDao.getRecordById(id)
+        } catch (e: Exception) {
+            null
+        }
+    }
     suspend fun getTotalExpenses(): Double {
         return withContext(Dispatchers.IO) {
             recordDao.getTotalExpenses() ?: 0.0
@@ -81,8 +85,7 @@ class RecordRepository(private val appDatabase: AppDatabase) {
             recordDao.getTotalIncome() ?: 0.0
         }
     }
-    // 清除操作状态（用于重置错误状态）
-    fun clearOperationState() {
-        _operationState.value = DataState.Success(Unit)
+    suspend fun clearOperationState() {
+        _operationState.value=DataState.Success(Unit)
     }
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 @TypeConverters(RecordTypeConverter::class)
 interface RecordDao {
 
+
     @Query("SELECT * FROM records ORDER BY date DESC")
     fun getAllRecords(): Flow<List<Record>>
 
@@ -36,6 +37,10 @@ interface RecordDao {
     // 分类统计
     @Query("SELECT category, SUM(amount) as total FROM records WHERE type = 'EXPENSE' GROUP BY category")
     suspend fun getExpensesByCategory(): List<CategoryAmount>
+
+    // 新增：批量更新方法（为未来功能准备）
+    @Update
+    suspend fun updateRecords(records: List<Record>)
 }
 
 // 分类统计数据类
