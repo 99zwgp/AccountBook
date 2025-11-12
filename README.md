@@ -139,7 +139,6 @@ app/src/main/java/com/example/accountbook/
 
 ## 🎨 界面预览
 
-<!-- 项目截图占位符 -->
 ### 📊 主要界面
 
 | 功能 | 界面描述 | 截图 |
@@ -149,7 +148,9 @@ app/src/main/java/com/example/accountbook/
 | 添加记录 | 新建记账记录表单 | ![添加记录](docs/images/add_record.png) |
 | 统计页面 | 财务数据可视化 | ![统计页面](docs/images/statistics.png) |
 
-*注：实际截图请替换为项目真实截图*
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ## 🔧 开发指南
 
