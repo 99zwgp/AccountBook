@@ -29,8 +29,8 @@ class RecordRepository(private val appDatabase: AppDatabase) {
 //    private val _statsState = MutableStateFlow<DataState<Boolean>>(DataState.Success(false))
 //    val statsState: StateFlow<DataState<Boolean>> = _statsState
 
-    fun getAllRecords(): Flow<List<Record>> {
-        return recordDao.getAllRecords()
+    fun getRecordsByUserId(userId: String): Flow<List<Record>> {
+        return recordDao.getRecordsByUserId(userId)
     }
 
     suspend fun addRecord(record: Record) {
@@ -67,22 +67,22 @@ class RecordRepository(private val appDatabase: AppDatabase) {
     }
     // 新增：根据ID获取记录 V0.4
     // 修复：根据ID获取记录 - 直接调用DAO，不要循环调用
-    suspend fun getRecordById(id: String): Record? {
+    suspend fun getRecordById(id: String, userId: String): Record? {
         return try {
-            recordDao.getRecordById(id)
+            recordDao.getRecordById(id, userId)
         } catch (e: Exception) {
             null
         }
     }
-    suspend fun getTotalExpenses(): Double {
+    suspend fun getTotalExpenses(userId: String): Double {
         return withContext(Dispatchers.IO) {
-            recordDao.getTotalExpenses() ?: 0.0
+            recordDao.getTotalExpenses(userId) ?: 0.0
         }
     }
 
-    suspend fun getTotalIncome(): Double {
+    suspend fun getTotalIncome(userId: String): Double {
         return withContext(Dispatchers.IO) {
-            recordDao.getTotalIncome() ?: 0.0
+            recordDao.getTotalIncome(userId) ?: 0.0
         }
     }
     suspend fun clearOperationState() {

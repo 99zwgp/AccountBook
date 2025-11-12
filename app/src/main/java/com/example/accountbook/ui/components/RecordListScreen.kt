@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.collect
 fun RecordListScreen(
     onAddRecordClick: () -> Unit,
     onStatsClick: () -> Unit,
+    onLogout: () -> Unit,
     viewModel: RecordViewModel,
     onEditRecord: (String) -> Unit
 ) {
@@ -113,6 +115,15 @@ fun RecordListScreen(
                         Icon(
                             imageVector = Icons.Filled.BarChart,
                             contentDescription = "统计"
+                        )
+                    }
+                    IconButton(
+                        onClick = onLogout,
+                        enabled = operationState !is DataState.Loading
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Logout,
+                            contentDescription = "登出"
                         )
                     }
                 }

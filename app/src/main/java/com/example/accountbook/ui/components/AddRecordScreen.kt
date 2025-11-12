@@ -141,12 +141,14 @@ fun AddRecordScreen(
                             if (validateForm(formState)) {
                                 val amountValue = formState.amount.toDoubleOrNull() ?: return@launch
 
+                                val currentUser = viewModel.getCurrentUserId()
                                 val newRecord = Record(
                                     type = formState.type,
                                     amount = amountValue,
                                     category = formState.category,
                                     note = formState.note,
-                                    date = formState.date // 包含时间戳
+                                    date = formState.date, // 包含时间戳
+                                    userId = currentUser ?: "" // 临时处理，需要真实的用户ID
                                 )
 
                                 viewModel.addRecord(newRecord)

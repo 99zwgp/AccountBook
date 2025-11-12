@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.Flow
 interface RecordDao {
 
 
-    @Query("SELECT * FROM records ORDER BY date DESC")
-    fun getAllRecords(): Flow<List<Record>>
+    @Query("SELECT * FROM records WHERE userId = :userId ORDER BY date DESC")
+    fun getRecordsByUserId(userId: String): Flow<List<Record>>
 
-    @Query("SELECT * FROM records WHERE id = :id")
-    suspend fun getRecordById(id: String): Record?
+    @Query("SELECT * FROM records WHERE id = :id AND userId = :userId")
+    suspend fun getRecordById(id: String, userId: String): Record?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRecord(record: Record)
@@ -24,19 +24,19 @@ interface RecordDao {
     @Delete
     suspend fun deleteRecord(record: Record)
 
-    @Query("DELETE FROM records")
-    suspend fun deleteAllRecords()
+    @Query("DELETE FROM records WHERE userId = :userId")
+    suspend fun deleteAllRecordsByUserId(userId: String)
 
     // 统计查询
-    @Query("SELECT SUM(amount) FROM records WHERE type = 'EXPENSE'")
-    suspend fun getTotalExpenses(): Double?
+    @Query("SELECT SUM(amount) FROM records WHERE type = 'EXPENSE' AND userId = :userId")
+    suspend fun getTotalExpenses(userId: String): Double?
 
-    @Query("SELECT SUM(amount) FROM records WHERE type = 'INCOME'")
-    suspend fun getTotalIncome(): Double?
+    @Query("SELECT SUM(amount) FROM records WHERE type = 'INCOME' AND userId = :userId")
+    suspend fun getTotalIncome(userId: String): Double?
 
     // 分类统计
-    @Query("SELECT category, SUM(amount) as total FROM records WHERE type = 'EXPENSE' GROUP BY category")
-    suspend fun getExpensesByCategory(): List<CategoryAmount>
+    @Query("SELECT category, SUM(amount) as total FROM records WHERE type = 'EXPENSE' AND userId = :userId GROUP BY category")
+    suspend fun getExpensesByCategory(userId: String): List<CategoryAmount>
 
     // 新增：批量更新方法（为未来功能准备）
     @Update

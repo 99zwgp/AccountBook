@@ -14,6 +14,8 @@ data class Record(
     val category: String,
     val note: String = "",
     val date: Long = System.currentTimeMillis(),
+    // 新增：用户关联字段
+    val userId: String,
     // 新增：编辑相关字段
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

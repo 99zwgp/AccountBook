@@ -1,6 +1,8 @@
 package com.example.accountbook.ui.navigation
 
 sealed class Screen(val route: String) {
+    object Login : Screen("login")
+    object Register : Screen("register")
     object RecordList : Screen("record_list")
     object AddRecord : Screen("add_record")
     object Statistics : Screen("statistics")

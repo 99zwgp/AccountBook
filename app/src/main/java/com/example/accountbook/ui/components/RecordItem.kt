@@ -184,3 +184,16 @@ fun RecordItem(
         }
     }
 }
+
+// 定义分类图标映射
+// 由于Icon引用问题，暂时注释掉此函数
+// fun getCategoryIcon(category: String): ImageVector {
+//     return when (category) {
+//         "餐饮" -> Icons.Default.Restaurant
+//         "购物" -> Icons.Default.ShoppingCart
+//         "交通" -> Icons.Default.DirectionsCar
+//         "娱乐" -> Icons.Default.TheaterComedy
+//         "教育" -> Icons.Default.School
+//         else -> Icons.Default.Category
+//     }
+// }

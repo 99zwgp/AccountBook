@@ -15,7 +15,30 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class RecordViewModel(private val recordRepository: RecordRepository) : ViewModel() {
 
-    val records = recordRepository.getAllRecords()
+    // 当前登录用户ID，默认为空字符串
+    private var _currentUserId = ""
+    
+    // 用户特定的记录流
+    private val _records = MutableStateFlow<List<Record>>(emptyList())
+    val records: StateFlow<List<Record>> = _records
+
+    // 根据当前用户ID更新记录流
+    private fun updateRecordsForCurrentUser() {
+        println("DEBUG: 开始更新用户 ${_currentUserId} 的记录流")
+        viewModelScope.launch {
+            try {
+                recordRepository.getRecordsByUserId(_currentUserId).collect { records ->
+                    println("DEBUG: 接收到用户 ${_currentUserId} 的记录，数量: ${records.size}")
+                    _records.value = records
+                    _recordsCache.clear()
+                    _recordsCache.addAll(records)
+                    println("DEBUG: 记录流更新完成，当前用户: ${_currentUserId}")
+                }
+            } catch (e: Exception) {
+                println("DEBUG: 记录流更新失败: ${e.message}")
+            }
+        }
+    }
 
     val totalExpenses = records.map { records ->
         records.filter { it.type == RecordType.EXPENSE }.sumOf { it.amount }
@@ -50,13 +73,37 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
     private val _recordsCache = mutableStateListOf<Record>()
     val recordsCache: List<Record> get() = _recordsCache
 
+    // 设置当前用户ID并更新记录
+    fun setCurrentUserId(userId: String) {
+        println("DEBUG: 设置当前用户ID: $userId")
+        // 如果用户ID发生变化，先清除原有数据
+        if (_currentUserId != userId) {
+            println("DEBUG: 用户ID发生变化，从 $_currentUserId 变为 $userId")
+            _records.value = emptyList()
+            _recordsCache.clear()
+            _currentUserId = userId
+            // 立即强制更新记录流
+            updateRecordsForCurrentUser()
+        }
+    }
+
+    // 清除当前用户ID（登出时使用）
+    fun clearCurrentUserId() {
+        println("DEBUG: 清除当前用户ID")
+        _currentUserId = ""
+        _records.value = emptyList()
+        _recordsCache.clear()
+    }
+
+    // 获取当前用户ID
+    fun getCurrentUserId(): String? {
+        return if (_currentUserId.isNotEmpty()) _currentUserId else null
+    }
+
     init {
-        // 监听记录变化并更新缓存 - 修复：使用正确的 recordRepository
-        viewModelScope.launch {
-            recordRepository.getAllRecords().collect { records ->
-                _recordsCache.clear()
-                _recordsCache.addAll(records)
-            }
+        // 初始化时如果用户ID为空，显示空列表
+        if (_currentUserId.isEmpty()) {
+            _records.value = emptyList()
         }
     }
 
@@ -78,6 +125,7 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
     }
 
     fun addRecord(record: Record) {
+        println("DEBUG: 添加记录，用户ID: ${record.userId}, 当前用户: $_currentUserId")
         viewModelScope.launch {
             recordRepository.addRecord(record)
         }
@@ -103,7 +151,7 @@ class RecordViewModel(private val recordRepository: RecordRepository) : ViewMode
 
     // 新增：编辑相关方法V0.4
     suspend fun getRecordById(id: String): Record? {
-        return recordRepository.getRecordById(id)
+        return recordRepository.getRecordById(id, _currentUserId)
     }
     // 添加同步版本的方法供Composable使用
     fun getRecordByIdSync(id: String): Record? {
