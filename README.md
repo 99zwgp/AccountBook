@@ -143,10 +143,10 @@ app/src/main/java/com/example/accountbook/
 
 | 功能 | 界面描述 | 截图 |
 |------|----------|------|
-| 登录页面 | 用户认证入口 | ![登录界面](docs/images/login_screen.png) |
-| 记录列表 | 显示所有记账记录 | ![记录列表](docs/images/record_list.png) |
-| 添加记录 | 新建记账记录表单 | ![添加记录](docs/images/add_record.png) |
-| 统计页面 | 财务数据可视化 | ![统计页面](docs/images/statistics.png) |
+| 登录页面 | 用户认证入口 | ![登录界面](docs/screenshots/login_screen.png) |
+| 记录列表 | 显示所有记账记录 | ![记录列表](docs/screenshots/record_list.png) |
+| 添加记录 | 新建记账记录表单 | ![添加记录](docs/imagescreenshotss/add_record.png) |
+| 统计页面 | 财务数据可视化 | ![统计页面](docs/screenshots/statistics.png) |
 
 ## 📄 许可证
 
